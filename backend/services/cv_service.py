@@ -58,7 +58,7 @@ def analyze_image(image_bytes):
         image = Image.open(image_stream).convert("RGB")
         image = image.resize((640, 640))
 
-        result = CLIENT.infer(image, model_id="fruit-ripeness-unjex/2")
+        result = CLIENT.infer(image, model_id="fruit-ripe-detection/19")
 
         preds = result.get("predictions", [])
 
