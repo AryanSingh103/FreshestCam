@@ -1,73 +1,96 @@
 /**
- * FreshCam Theme
- * Supports both light/dark mode + custom brand colors
+ * FreshCam Design System
+ * Strict palette — do not add new colors outside this file.
  */
 
-import { Platform } from "react-native";
+import { useColorScheme } from "react-native";
 
-const tintColorLight = "#4CAF50"; // FreshCam green
-const tintColorDark = "#81C784";  // Softer green for dark mode
+// ─── Brand palette ──────────────────────────────────────────
+export const Brand = {
+  primary: "#4CAF50",
+  primaryDark: "#388E3C",
+  primaryLight: "#81C784",
+  accent: "#FFC107",
+  danger: "#E53935",
+  info: "#2196F3",
+  success: "#66BB6A",
+} as const;
 
+// ─── Per-scheme tokens ──────────────────────────────────────
 export const Colors = {
   light: {
     text: "#11181C",
-    background: "#FFFFFF",
-    tint: tintColorLight,
+    textSecondary: "#6B7280",
+    background: "#F8F9FB",
+    surface: "#FFFFFF",
+    card: "#FFFFFF",
+    border: "#E5E7EB",
+    tint: Brand.primary,
     icon: "#687076",
     tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    card: "#FFFFFF",
-    shadow: "#00000020",
+    tabIconSelected: Brand.primary,
+    shadow: "#00000018",
+    tabBar: "#FFFFFF",
+    tabBarBorder: "#E5E7EB",
+    overlay: "rgba(0,0,0,0.04)",
   },
   dark: {
     text: "#ECEDEE",
-    background: "#151718",
-    tint: tintColorDark,
+    textSecondary: "#9BA1A6",
+    background: "#0B0F14",
+    surface: "#1A1D21",
+    card: "#1E2227",
+    border: "#2D3139",
+    tint: Brand.primaryLight,
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    card: "#1E1E1E",
+    tabIconSelected: Brand.primaryLight,
     shadow: "#00000050",
+    tabBar: "#151718",
+    tabBarBorder: "#2D3139",
+    overlay: "rgba(255,255,255,0.04)",
   },
+  // Semantic / brand-level — usable in both modes
+  ...Brand,
+} as const;
 
-  // 🍃 Brand Colors — usable in both themes
-  primary: "#4CAF50",     // main green
-  accent: "#FFC107",      // yellow accent
-  danger: "#E53935",      // red for overripe alerts
-  info: "#2196F3",        // blue for details or tooltips
-  success: "#66BB6A",     // lighter green for "fresh"
-  
-};
+// ─── Spacing / Radius tokens ────────────────────────────────
+export const Space = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+} as const;
 
-export const Fonts = Platform.select({
-  ios: {
-    sans: "system-ui",
-    serif: "ui-serif",
-    rounded: "ui-rounded",
-    mono: "ui-monospace",
-  },
-  default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  full: 999,
+} as const;
 
+// ─── Theme hook (returns scheme-aware tokens) ───────────────
+export type SchemeTokens = typeof Colors.light;
+
+export function useThemeTokens(): SchemeTokens {
+  const scheme = useColorScheme() ?? "light";
+  return Colors[scheme];
+}
+
+// ─── Flat colors kept for backwards-compat in result.tsx ────
 export const FlatColors = {
   text: Colors.light.text,
+  textSecondary: Colors.light.textSecondary,
   background: Colors.light.background,
-  primary: Colors.primary,
-  accent: Colors.accent,
-  danger: Colors.danger,
-  success: Colors.success,
-  info: Colors.info,
+  primary: Brand.primary,
+  accent: Brand.accent,
+  danger: Brand.danger,
+  success: Brand.success,
+  info: Brand.info,
   card: Colors.light.card,
   shadow: Colors.light.shadow,
+  surface: Colors.light.surface,
 };

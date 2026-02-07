@@ -1,24 +1,27 @@
 import React from "react";
-import { Stack, Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../constants/theme";
+import { Stack } from "expo-router";
+import { Brand, useThemeTokens } from "../constants/theme";
 
 export default function Layout() {
+  const t = useThemeTokens();
+
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: t.background },
+        headerTintColor: t.text,
+        contentStyle: { backgroundColor: t.background },
+      }}
+    >
       <Stack.Screen
         name="(tabs)"
-        options={{ 
-          title: "back",
-          headerShown: false 
-        }}
+        options={{ headerShown: false }}
       />
-
       <Stack.Screen
         name="result"
         options={{
           title: "Result",
-          headerStyle: { backgroundColor: Colors.primary },
+          headerStyle: { backgroundColor: Brand.primary },
           headerTintColor: "#fff",
         }}
       />

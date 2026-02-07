@@ -7,161 +7,240 @@ import {
   ActivityIndicator,
   StyleSheet,
   ScrollView,
+  useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { FlatColors as Colors } from "../constants/theme";
+import { Brand, Colors, Radius, Space, useThemeTokens } from "../constants/theme";
 
+/* ─── Freshness Meter (horizontal bar) ────────────────── */
+function FreshnessMeter({ level, label }: { level: number; label: string }) {
+  const t = useThemeTokens();
+  const barColor =
+    level >= 70 ? Brand.primary : level >= 40 ? Brand.accent : Brand.danger;
+
+  return (
+    <View style={{ marginTop: Space.sm }}>
+      <View style={[meterStyles.track, { backgroundColor: t.border }]}>
+        <View style={[meterStyles.fill, { width: `${Math.min(level, 100)}%`, backgroundColor: barColor }]} />
+      </View>
+      <Text style={[meterStyles.label, { color: t.textSecondary }]}>{label}</Text>
+    </View>
+  );
+}
+
+const meterStyles = StyleSheet.create({
+  track: { height: 8, borderRadius: 4, overflow: "hidden" },
+  fill: { height: 8, borderRadius: 4 },
+  label: { fontSize: 11, marginTop: 4, textAlign: "right" },
+});
+
+/* ─── Ripeness badge colour ───────────────────────────── */
+function ripenessColor(ripeness: string) {
+  switch (ripeness?.toLowerCase()) {
+    case "fresh":
+    case "ripe":
+      return Brand.primary;
+    case "unripe":
+      return Brand.accent;
+    case "overripe":
+    case "spoiled":
+      return Brand.danger;
+    default:
+      return "#9E9E9E";
+  }
+}
+
+function ripenessScore(ripeness: string): number {
+  switch (ripeness?.toLowerCase()) {
+    case "fresh":
+      return 95;
+    case "ripe":
+      return 75;
+    case "unripe":
+      return 50;
+    case "overripe":
+      return 25;
+    case "spoiled":
+      return 8;
+    default:
+      return 50;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ResultScreen
+   ══════════════════════════════════════════════════════════ */
 export default function ResultScreen() {
+  const t = useThemeTokens();
+  const scheme = useColorScheme() ?? "light";
   const router = useRouter();
   const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
+
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (imageUri) {
-      analyzeImage(imageUri);
-    }
+    if (imageUri) analyzeImage(imageUri);
   }, [imageUri]);
 
+  /* ─── API call (unchanged logic) ────────────────────── */
   const analyzeImage = async (uri: string) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const formData = new FormData();
-      formData.append("file", {
-        uri,
-        type: "image/jpeg",
-        name: "image.jpg",
-      } as any);
+      formData.append("file", { uri, type: "image/jpeg", name: "image.jpg" } as any);
 
       const res = await fetch(
         "https://proautomation-aerographical-dayton.ngrok-free.dev/predict?include_nutrition=true",
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setResult(data);
-      }
+      data.error ? setError(data.error) : setResult(data);
     } catch (err: any) {
       console.error("❌ Upload error:", err);
-      setError(err.message || "Failed to analyze image. Please try again.");
+      setError(err.message || "Failed to analyse image. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ─── Loading state ─────────────────────────────────── */
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Analyzing freshness...</Text>
+      <View style={[styles.center, { backgroundColor: t.background }]}>
+        <ActivityIndicator size="large" color={t.tint} />
+        <Text style={[styles.centerLabel, { color: t.textSecondary }]}>Analysing freshness…</Text>
       </View>
     );
   }
 
+  /* ─── Error state ───────────────────────────────────── */
   if (error) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="alert-circle" size={64} color={Colors.danger} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.buttonText}>Try Again</Text>
+      <View style={[styles.center, { backgroundColor: t.background }]}>
+        <View style={styles.errorIcon}>
+          <Ionicons name="warning" size={32} color="#fff" />
+        </View>
+        <Text style={[styles.errorTitle, { color: t.text }]}>Something went wrong</Text>
+        <Text style={[styles.errorMsg, { color: t.textSecondary }]}>{error}</Text>
+        <TouchableOpacity activeOpacity={0.85} style={styles.retryBtn} onPress={() => router.back()}>
+          <Text style={styles.retryTxt}>Go Back & Retry</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  return (
-    <ScrollView style={styles.container}>
-      {/* Header with Back Button */}
+  /* ─── Success ───────────────────────────────────────── */
+  const ripeness = result?.ripeness ?? "Unknown";
+  const badgeColor = ripenessColor(ripeness);
+  const freshnessLevel = ripenessScore(ripeness);
 
-      {/* Image */}
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: imageUri }} style={styles.image} />
+  return (
+    <ScrollView
+      style={[styles.scroll, { backgroundColor: t.background }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Image card ── */}
+      <View style={[styles.imgCard, { backgroundColor: t.card, shadowColor: t.shadow }]}>
+        <Image source={{ uri: imageUri }} style={styles.img} />
       </View>
 
-      {/* Results */}
       {result && !result.error ? (
-        <View style={styles.resultsContainer}>
-          {/* Fruit Name */}
-          <Text style={styles.fruitName}>{result.fruit_name || "Unknown"}</Text>
-          
-          {/* Ripeness Badge */}
-          <View style={[styles.badge, getRipenessColor(result.ripeness)]}>
-            <Text style={styles.badgeText}>{result.ripeness || "Unknown"}</Text>
+        <View style={styles.body}>
+          {/* ── Title row ── */}
+          <View style={styles.titleRow}>
+            <Text style={[styles.fruitName, { color: t.text }]}>
+              {result.fruit_name || "Unknown"}
+            </Text>
+            <View style={[styles.badge, { backgroundColor: badgeColor }]}>
+              <Text style={styles.badgeTxt}>{ripeness}</Text>
+            </View>
           </View>
 
-          {/* Confidence */}
-          <Text style={styles.confidence}>
-            Confidence: {result.confidence}%
-          </Text>
+          {/* ── Freshness Meter ── */}
+          <View style={[styles.card, { backgroundColor: t.card, shadowColor: t.shadow }]}>
+            <Text style={[styles.cardTitle, { color: t.text }]}>Freshness Meter</Text>
+            <FreshnessMeter level={freshnessLevel} label={`${freshnessLevel}%`} />
+          </View>
 
-          {/* Nutrition Info */}
+          {/* ── Confidence ── */}
+          <View style={[styles.card, { backgroundColor: t.card, shadowColor: t.shadow }]}>
+            <View style={styles.metricRow}>
+              <Text style={[styles.metricLabel, { color: t.textSecondary }]}>Confidence</Text>
+              <Text style={[styles.metricValue, { color: t.text }]}>{result.confidence ?? "—"}%</Text>
+            </View>
+          </View>
+
+          {/* ── Nutrition ── */}
           {result.nutrition && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Nutrition Facts</Text>
-              <View style={styles.nutritionGrid}>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionValue}>{result.nutrition.calories}</Text>
-                  <Text style={styles.nutritionLabel}>Calories</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionValue}>{result.nutrition.carbs_g}g</Text>
-                  <Text style={styles.nutritionLabel}>Carbs</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionValue}>{result.nutrition.fiber_g}g</Text>
-                  <Text style={styles.nutritionLabel}>Fiber</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionValue}>{result.nutrition.protein_g}g</Text>
-                  <Text style={styles.nutritionLabel}>Protein</Text>
-                </View>
+            <View style={[styles.card, { backgroundColor: t.card, shadowColor: t.shadow }]}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>Nutrition Facts</Text>
+              <View style={styles.nutriGrid}>
+                {[
+                  { v: result.nutrition.calories, l: "Calories" },
+                  { v: `${result.nutrition.carbs_g}g`, l: "Carbs" },
+                  { v: `${result.nutrition.fiber_g}g`, l: "Fiber" },
+                  { v: `${result.nutrition.protein_g}g`, l: "Protein" },
+                ].map((n, i) => (
+                  <View key={i} style={[styles.nutriCell, { backgroundColor: t.overlay }]}>
+                    <Text style={[styles.nutriVal, { color: t.text }]}>{n.v}</Text>
+                    <Text style={[styles.nutriLbl, { color: t.textSecondary }]}>{n.l}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
 
-          {/* Environmental Impact */}
+          {/* ── Environmental Impact ── */}
           {result.environmental_impact && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🌍 Environmental Impact</Text>
-              <Text style={styles.infoText}>
-                Carbon: {result.environmental_impact.carbon_footprint_kg} kg CO₂
-              </Text>
-              <Text style={styles.infoText}>
-                Water: {result.environmental_impact.water_usage_liters} liters
-              </Text>
+            <View style={[styles.card, { backgroundColor: t.card, shadowColor: t.shadow }]}>
+              <Text style={[styles.cardTitle, { color: t.text }]}>🌍 Environmental Impact</Text>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLbl, { color: t.textSecondary }]}>Carbon</Text>
+                <Text style={[styles.infoVal, { color: t.text }]}>
+                  {result.environmental_impact.carbon_footprint_kg} kg CO₂
+                </Text>
+              </View>
+              <View style={[styles.divider, { backgroundColor: t.border }]} />
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLbl, { color: t.textSecondary }]}>Water</Text>
+                <Text style={[styles.infoVal, { color: t.text }]}>
+                  {result.environmental_impact.water_usage_liters} litres
+                </Text>
+              </View>
             </View>
           )}
 
-          {/* Actions */}
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.buttonText}>Scan Another</Text>
-          </TouchableOpacity>
+          {/* ── Action buttons (side-by-side) ── */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.actionPrimary]}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="scan" size={18} color="#fff" />
+              <Text style={styles.actionPrimaryTxt}>Scan Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.actionOutline, { borderColor: t.border }]}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="book-outline" size={18} color={t.tint} />
+              <Text style={[styles.actionOutlineTxt, { color: t.tint }]}>Storage Tips</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>
+        <View style={[styles.center, { paddingTop: 60 }]}>
+          <Text style={[styles.errorMsg, { color: t.textSecondary }]}>
             {result?.error || "No predictions returned."}
           </Text>
         </View>
@@ -170,148 +249,128 @@ export default function ResultScreen() {
   );
 }
 
-function getRipenessColor(ripeness: string) {
-  switch (ripeness?.toLowerCase()) {
-    case "ripe":
-      return { backgroundColor: "#4CAF50" };
-    case "unripe":
-      return { backgroundColor: "#FF9800" };
-    case "overripe":
-      return { backgroundColor: "#F44336" };
-    default:
-      return { backgroundColor: "#9E9E9E" };
-  }
-}
-
+/* ─── Styles ──────────────────────────────────────────── */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backText: {
-    fontSize: 16,
-    color: Colors.text,
-    marginLeft: 8,
-    fontWeight: "500",
-  },
-  center: {
-    flex: 1,
+  /* Scroll */
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 48 },
+
+  /* Center states */
+  center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: Space.lg },
+  centerLabel: { marginTop: 14, fontSize: 15 },
+
+  /* Error */
+  errorIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: Radius.full,
+    backgroundColor: Brand.danger,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.background,
-    padding: 20,
+    marginBottom: Space.md,
   },
-  loadingText: {
-    color: Colors.text,
-    marginTop: 15,
-    fontSize: 16,
-  },
-  imageContainer: {
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  image: {
-    width: 250,
-    height: 250,
-    borderRadius: 15,
-  },
-  resultsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  fruitName: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: Colors.text,
-    textAlign: "center",
-    textTransform: "capitalize",
-    marginBottom: 10,
-  },
-  badge: {
-    alignSelf: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 10,
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  confidence: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 30,
-  },
-  section: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  nutritionGrid: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-  nutritionItem: {
-    alignItems: "center",
-  },
-  nutritionValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: Colors.primary,
-  },
-  nutritionLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  errorText: {
-    color: Colors.danger,
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 10,
-  },
-  primaryButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 20,
-    alignItems: "center",
-  },
-  retryButton: {
-    backgroundColor: Colors.primary,
+  errorTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  errorMsg: { fontSize: 14, textAlign: "center", lineHeight: 20, maxWidth: 300 },
+  retryBtn: {
+    marginTop: Space.lg,
+    backgroundColor: Brand.primary,
+    paddingVertical: 14,
     paddingHorizontal: 30,
+    borderRadius: Radius.full,
+  },
+  retryTxt: { color: "#fff", fontWeight: "700", fontSize: 15 },
+
+  /* Image */
+  imgCard: {
+    marginHorizontal: Space.md,
+    marginTop: Space.md,
+    borderRadius: Radius.lg,
+    overflow: "hidden",
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  img: { width: "100%", height: 280 },
+
+  /* Body */
+  body: { paddingHorizontal: Space.md, marginTop: Space.md },
+
+  /* Title row */
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Space.sm,
+  },
+  fruitName: { fontSize: 26, fontWeight: "700" },
+  badge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+  },
+  badgeTxt: { color: "#fff", fontWeight: "700", fontSize: 12, textTransform: "capitalize" },
+
+  /* Generic card */
+  card: {
+    marginTop: Space.sm + 4,
+    padding: Space.md,
+    borderRadius: Radius.md,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  cardTitle: { fontSize: 15, fontWeight: "700", marginBottom: Space.sm },
+
+  /* Metric */
+  metricRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  metricLabel: { fontSize: 14 },
+  metricValue: { fontSize: 22, fontWeight: "700" },
+
+  /* Nutrition */
+  nutriGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  nutriCell: {
+    width: "47%",
+    borderRadius: Radius.sm,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  nutriVal: { fontSize: 16, fontWeight: "700" },
+  nutriLbl: { fontSize: 12, marginTop: 3 },
+
+  /* Info rows */
+  infoRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 7 },
+  infoLbl: { fontSize: 13 },
+  infoVal: { fontSize: 13, fontWeight: "600" },
+  divider: { height: StyleSheet.hairlineWidth },
+
+  /* Actions */
+  actionsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: Space.lg,
+  },
+  actionPrimary: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Brand.primary,
     paddingVertical: 15,
-    borderRadius: 25,
-    marginTop: 20,
+    borderRadius: Radius.md,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  actionPrimaryTxt: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  actionOutline: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    paddingVertical: 15,
+    borderRadius: Radius.md,
   },
+  actionOutlineTxt: { fontWeight: "700", fontSize: 15 },
 });
