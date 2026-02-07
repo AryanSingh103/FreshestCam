@@ -4,9 +4,9 @@ A smart fruit freshness detection app that uses computer vision and AI to identi
 
 ## Features
 
-- 🍎 **Fruit Identification**: Uses Google Gemini AI to accurately identify fruit types
+- 🍎 **Fruit Identification**: Uses OpenAI to accurately identify fruit types
 - 🎯 **Ripeness Detection**: Computer vision model detects if fruit is unripe, ripe, or overripe
-- 🔄 **AI Fallback**: Automatically uses Gemini AI as fallback when CV model fails, ensuring reliable results
+- 🔄 **AI Fallback**: Automatically uses OpenAI as fallback when CV model fails, ensuring reliable results
 - 📱 **Mobile App**: React Native/Expo frontend for easy photo capture
 - ⚡ **FastAPI Backend**: High-performance API for image analysis
 
@@ -28,12 +28,12 @@ pip install -r requirements.txt
 ```env
 ROBOFLOW_URL=https://detect.roboflow.com
 ROBOFLOW_API_KEY=your_roboflow_api_key
-GEMINI_API_KEY=your_gemini_api_key
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 Get your API keys:
 - Roboflow: https://roboflow.com
-- Google Gemini: https://makersuite.google.com/app/apikey
+- OpenAI: https://platform.openai.com/api-keys
 
 4. Run the backend:
 ```bash
@@ -66,8 +66,8 @@ npx expo start --tunnel
 
 1. **Take a photo** of a fruit using the mobile app
 2. **CV Model analyzes** the image for ripeness
-3. **Gemini AI identifies** the fruit name (always)
-4. **Fallback mechanism**: If CV model fails, Gemini AI analyzes ripeness
+3. **OpenAI identifies** the fruit name (always)
+4. **Fallback mechanism**: If CV model fails, OpenAI analyzes ripeness
 5. **Results returned**: fruit name, ripeness stage, and confidence score
 
 ## API Response Format
@@ -81,4 +81,4 @@ npx expo start --tunnel
 }
 ```
 
-- `source` can be: `"cv_model"` or `"gemini_fallback"`
+- `source` can be: `"cv_model"` or `"openai_fallback"`

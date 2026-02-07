@@ -60,7 +60,7 @@ async def predict(
         if len(image_bytes) == 0:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
-        # Run CV model / Gemini for basic analysis
+        # Run CV model / OpenAI for basic analysis
         result = analyze_image(image_bytes)
         print("✅ Analysis result:", result)
 

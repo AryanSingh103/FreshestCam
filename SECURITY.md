@@ -11,7 +11,7 @@ This project uses several API keys and secrets that must be kept secure:
 - ✅ API keys, tokens, passwords
 
 ### API Keys Used
-1. **Google Gemini API Key** - For AI-powered fruit analysis
+1. **OpenAI API Key** - For AI-powered fruit analysis
 2. **Roboflow API Key** - For computer vision model
 3. **ngrok Auth Token** - For secure tunneling (temporary)
 
@@ -22,8 +22,8 @@ This project uses several API keys and secrets that must be kept secure:
 Create a `backend/.env` file (use `backend/.env.example` as template):
 
 ```env
-# Google Gemini API Configuration
-GEMINI_API_KEY=your_actual_gemini_key_here
+# OpenAI API Configuration
+OPENAI_API_KEY=your_actual_openai_key_here
 
 # Roboflow API Configuration
 ROBOFLOW_URL=https://detect.roboflow.com
@@ -60,7 +60,7 @@ git rm --cached backend/.env
 git diff --cached
 
 # 4. Search for exposed secrets
-git grep -i "AIzaSy"  # Gemini keys start with this
+git grep -i "sk-proj"  # OpenAI keys start with this
 git grep -i "api_key"
 ```
 
@@ -113,7 +113,7 @@ git push origin --force --all
 
 ## 🆘 Getting API Keys
 
-- **Gemini API**: https://makersuite.google.com/app/apikey
+- **OpenAI API**: https://platform.openai.com/api-keys
 - **Roboflow API**: https://roboflow.com (after creating account/project)
 - **ngrok Auth Token**: https://dashboard.ngrok.com/get-started/your-authtoken
 

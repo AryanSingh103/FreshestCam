@@ -31,10 +31,10 @@ else:
 def analyze_image(image_bytes):
     """
     Analyze fruit image using CV model for ripeness detection.
-    Always uses Gemini for fruit name.
-    Falls back to Gemini for ripeness if CV model fails or is not available.
+    Always uses OpenAI for fruit name.
+    Falls back to OpenAI for ripeness if CV model fails or is not available.
     """
-    # ALWAYS get fruit name from Gemini (more reliable)
+    # ALWAYS get fruit name from OpenAI (more reliable)
     fruit_info = get_fruit_name(image_bytes)
     fruit_name = fruit_info.get("fruit_name", "unknown")
 
@@ -62,21 +62,21 @@ def analyze_image(image_bytes):
 
         preds = result.get("predictions", [])
 
-        # If CV model has no predictions, use Gemini as fallback
+        # If CV model has no predictions, use OpenAI as fallback
         if not preds:
-            print("⚠️ No predictions from CV model, falling back to Gemini...")
-            gemini_result = analyze_ripeness_with_gemini(image_bytes)
+            print("⚠️ No predictions from CV model, falling back to OpenAI...")
+            openai_result = analyze_ripeness_with_openai(image_bytes)
 
-            if "error" not in gemini_result:
+            if "error" not in openai_result:
                 return {
-                    "fruit_name": fruit_name,  # Use Gemini's fruit name
-                    "ripeness": gemini_result.get("ripeness", "unknown"),
-                    "confidence": gemini_result.get("confidence", 70.0),
-                    "source": "gemini_fallback",
+                    "fruit_name": fruit_name,  # Use OpenAI's fruit name
+                    "ripeness": openai_result.get("ripeness", "unknown"),
+                    "confidence": openai_result.get("confidence", 70.0),
+                    "source": "openai_fallback",
                 }
             else:
                 return {
-                    "error": "No predictions found from CV model and Gemini fallback failed"
+                    "error": "No predictions found from CV model and OpenAI fallback failed"
                 }
 
         # CV model has predictions - use them for ripeness
@@ -85,7 +85,7 @@ def analyze_image(image_bytes):
         stage = raw_class.split()[-1] if raw_class != "unknown" else "unknown"
 
         return {
-            "fruit_name": fruit_name,  # Always from Gemini
+            "fruit_name": fruit_name,  # Always from OpenAI
             "ripeness": stage,
             "confidence": round(top_pred.get("confidence", 0) * 100, 2),
             "source": "cv_model",

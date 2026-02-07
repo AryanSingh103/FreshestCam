@@ -53,7 +53,7 @@
 
 | Service | Key Status | Location |
 |---------|------------|----------|
-| Google Gemini | ✅ Secure | `backend/.env` (not tracked) |
+| OpenAI | ✅ Secure | `backend/.env` (not tracked) |
 | Roboflow | ✅ Secure | `backend/.env` (not tracked) |
 | ngrok Token | ✅ Secure | Used via command line |
 
@@ -96,7 +96,7 @@ Your repository is now **SECURE** and ready to push to GitHub!
    - This is temporary and changes each session - **SAFE TO COMMIT**
    - Update this URL each time you restart ngrok
 
-2. **Gemini API Key**:
+2. **OpenAI API Key**:
    - **Secured** in `backend/.env` (not tracked)
    - ⚠️ **IMPORTANT**: Consider rotating this key as a precaution
 
@@ -106,7 +106,7 @@ Your repository is now **SECURE** and ready to push to GitHub!
 
 ## 🔒 Recommendations
 
-1. **Rotate API keys** as a precaution (both Gemini and Roboflow)
+1. **Rotate API keys** as a precaution (both OpenAI and Roboflow)
 2. **Enable GitHub secret scanning** in your repository settings
 3. **Review commits** before pushing in the future
 4. **Use environment variables** for all sensitive data

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from services.gemini_service import (
-    analyze_ripeness_with_gemini,
+from services.openai_service import (
+    analyze_ripeness_with_openai,
     get_fruit_name,
     get_recipes_and_safety,
 )
@@ -33,7 +33,7 @@ async def get_recipes(file: UploadFile = File(...)):
         # First detect fruit name and ripeness for better context
         print("📊 Detecting fruit and ripeness first...")
         fruit_info = get_fruit_name(image_bytes)
-        ripeness_info = analyze_ripeness_with_gemini(image_bytes)
+        ripeness_info = analyze_ripeness_with_openai(image_bytes)
 
         fruit_name = fruit_info.get("fruit_name", "unknown")
         ripeness = ripeness_info.get("ripeness", "unknown")

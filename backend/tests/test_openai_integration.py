@@ -1,5 +1,5 @@
 """
-Test script for Gemini integration with FreshCam
+Test script for OpenAI integration with FreshCam
 Tests both fruit name detection and ripeness fallback
 """
 
@@ -12,14 +12,14 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 
-def test_gemini_fruit_name():
-    """Test Gemini fruit name detection"""
+def test_openai_fruit_name():
+    """Test OpenAI fruit name detection"""
     print("=" * 60)
-    print("TEST 1: Gemini Fruit Name Detection")
+    print("TEST 1: OpenAI Fruit Name Detection")
     print("=" * 60)
 
     try:
-        from services.gemini_service import get_fruit_name
+        from services.openai_service import get_fruit_name
 
         # Test with a sample image
         test_image = backend_path / "images" / "ripe_mango.jpg"
@@ -45,14 +45,14 @@ def test_gemini_fruit_name():
         return False
 
 
-def test_gemini_ripeness_fallback():
-    """Test Gemini ripeness detection (fallback)"""
+def test_openai_ripeness_fallback():
+    """Test OpenAI ripeness detection (fallback)"""
     print("\n" + "=" * 60)
-    print("TEST 2: Gemini Ripeness Fallback")
+    print("TEST 2: OpenAI Ripeness Fallback")
     print("=" * 60)
 
     try:
-        from services.gemini_service import analyze_ripeness_with_gemini
+        from services.openai_service import analyze_ripeness_with_openai
 
         # Test with a sample image
         test_image = backend_path / "images" / "ripe_banana.jpg"
@@ -64,11 +64,11 @@ def test_gemini_ripeness_fallback():
         with open(test_image, "rb") as f:
             image_bytes = f.read()
 
-        result = analyze_ripeness_with_gemini(image_bytes)
+        result = analyze_ripeness_with_openai(image_bytes)
         print(f"✓ Result: {result}")
 
         if "ripeness" in result and "fruit_name" in result:
-            print("✅ PASS: Gemini ripeness analysis working")
+            print("✅ PASS: OpenAI ripeness analysis working")
             return True
         else:
             print("❌ FAIL: Missing required fields in result")
@@ -80,9 +80,9 @@ def test_gemini_ripeness_fallback():
 
 
 def test_integrated_cv_service():
-    """Test integrated CV service with Gemini fallback"""
+    """Test integrated CV service with OpenAI fallback"""
     print("\n" + "=" * 60)
-    print("TEST 3: Integrated CV Service with Gemini")
+    print("TEST 3: Integrated CV Service with OpenAI")
     print("=" * 60)
 
     try:
@@ -103,8 +103,8 @@ def test_integrated_cv_service():
         if "error" in result:
             print(f"⚠️ WARNING: Error in result - {result['error']}")
             # This might be OK if it's due to missing API keys
-            if "GEMINI_API_KEY" in str(result.get("error", "")):
-                print("ℹ️ INFO: Need to set GEMINI_API_KEY in .env file")
+            if "OPENAI_API_KEY" in str(result.get("error", "")):
+                print("ℹ️ INFO: Need to set OPENAI_API_KEY in .env file")
             return False
 
         if "fruit_name" in result and "ripeness" in result:
@@ -132,7 +132,7 @@ def check_environment():
     print("ENVIRONMENT CHECK")
     print("=" * 60)
 
-    required_vars = ["GEMINI_API_KEY", "ROBOFLOW_API_KEY", "ROBOFLOW_URL"]
+    required_vars = ["OPENAI_API_KEY", "ROBOFLOW_API_KEY", "ROBOFLOW_URL"]
     all_set = True
 
     for var in required_vars:
@@ -147,7 +147,7 @@ def check_environment():
     if not all_set:
         print("\n⚠️ WARNING: Some environment variables are not set")
         print("   Create a .env file in the backend directory with:")
-        print("   GEMINI_API_KEY=your_key_here")
+        print("   OPENAI_API_KEY=your_key_here")
         print("   ROBOFLOW_API_KEY=your_key_here")
         print("   ROBOFLOW_URL=https://detect.roboflow.com")
 
@@ -155,7 +155,7 @@ def check_environment():
 
 
 if __name__ == "__main__":
-    print("\n🧪 FRESHCAM - GEMINI INTEGRATION TESTS\n")
+    print("\n🧪 FRESHCAM - OPENAI INTEGRATION TESTS\n")
 
     # Check environment first
     env_ok = check_environment()
@@ -167,8 +167,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Run tests
-    test1 = test_gemini_fruit_name()
-    test2 = test_gemini_ripeness_fallback()
+    test1 = test_openai_fruit_name()
+    test2 = test_openai_ripeness_fallback()
     test3 = test_integrated_cv_service()
 
     # Summary
