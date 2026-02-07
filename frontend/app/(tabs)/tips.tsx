@@ -187,4 +187,3 @@ const styles = StyleSheet.create({
   },
   footerTxt: { fontSize: 13, fontStyle: "italic" },
 });
-});
